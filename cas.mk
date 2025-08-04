@@ -16,8 +16,9 @@
 # Args:
 #   1: target name (used for naming the hash/marker files)
 #   2: space-separated list of dependencies
+#   3. (optional) space separated list of environment variables to track
 define cas_inputs
-$(eval $(call _cas_make_inputs_rule,$(1),$(2)))\
+$(eval $(call _cas_make_inputs_rule,$(1),$(2),$(3)))\
 .cas/inputs/$(1).hash
 endef
 
@@ -30,9 +31,17 @@ define _cas_make_inputs_rule
 	$$(file >.cas/inputs/$(1).list.tmp,$(sort $(2)))
 	@if [ ! -f $$@ ] || ! cmp -s $$@.tmp $$@; then mv $$@.tmp $$@; else rm $$@.tmp; fi
 
+# Track environment variables if specified
+.PHONY: .cas/inputs/$(1).env
+.cas/inputs/$(1).env:
+	@echo >$$@.tmp
+	@$(foreach var,$(sort $(3)),echo "$(var)=$$($(var))" >> $$@.tmp;)
+	@if [ ! -f $$@ ] || ! cmp -s $$@.tmp $$@; then mv $$@.tmp $$@; else rm $$@.tmp; fi
+
 # The marker file depends on all deps, but its timestamp will only be updated when their content changes
-.cas/inputs/$(1).hash: .cas/inputs/$(1).list $(2)
-	@cat $$< | tr ' ' '\n' | xargs sha1sum > $$@.tmp;
+.cas/inputs/$(1).hash: .cas/inputs/$(1).list .cas/inputs/$(1).env $(2)
+	@cat .cas/inputs/$(1).list | tr ' ' '\n' | xargs sha1sum > $$@.tmp;
+	@cat .cas/inputs/$(1).env | sha1sum >> $$@.tmp;
 	@if [ ! -f $$@ ] || ! cmp -s $$@.tmp $$@; then \
 		if [ -n "$(VERBOSE)" ]; then echo "Updating $$@"; diff --unified $$@ $$@.tmp | grep '^[+-][^+-]' || true; fi; \
 		mv $$@.tmp $$@; \

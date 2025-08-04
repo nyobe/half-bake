@@ -29,3 +29,10 @@ bin/main: $(call cas_inputs,bin/main,$(GO) main.go lib.go)
 # this is a silly example, but in practice this avoids rebuilding artifacts when switching between branches.
 bin/main2: $(call cas_inputs,bin/main2,$(GO) main.go lib.go)
 	$(call cas_run,$(GO) build -o $@ $(call cas_get_deps,%.go))
+
+# example of capturing a variable as part of the inputs
+# the third argument of cas_inputs takes a list of env vars to consider as part of the inputs.
+# here, we can see that the LDFLAGS are captured. Observe that changing the env var will force a rebuild.
+LDFLAGS = -ldflags="-X 'main.Greeting=this-flag-is-captured-in-deps'"
+bin/stamp: $(call cas_inputs,bin/stamp,$(GO) main.go lib.go,LDFLAGS)
+	$(call cas_run,$(GO) build $(LDFLAGS) -o $@ $(call cas_get_deps,%.go))
