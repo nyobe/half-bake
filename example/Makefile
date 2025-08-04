@@ -36,3 +36,9 @@ bin/main2: $(call cas_inputs,bin/main2,$(GO) main.go lib.go)
 LDFLAGS = -ldflags="-X 'main.Greeting=this-flag-is-captured-in-deps'"
 bin/stamp: $(call cas_inputs,bin/stamp,$(GO) main.go lib.go,LDFLAGS)
 	$(call cas_run,$(GO) build $(LDFLAGS) -o $@ $(call cas_get_deps,%.go))
+
+# example of co-locating the hash file with a generated file
+# if you run `make generated.txt` it should already be considered up to date because inputs still match the co-located hash file.
+generated.txt: $(call cas_inputs_at,generated.txt,lib.go)
+	# (pretend this is generating protobufs or mocks)
+	cat $(call cas_get_deps,%.go) | tr '[:lower:]' '[:upper:]' > $@

@@ -22,6 +22,13 @@ $(eval $(call _cas_make_inputs_rule,$(1),$(2),$(3)))\
 .cas/inputs/$(1).hash
 endef
 
+# Like cas_inputs but places the .hash next to the target, so it can be checked in.
+# This helps avoid unnecessarily rebuilding generated files on checkout.
+define cas_inputs_at
+$(eval $(call _cas_make_inputs_rule_at,$(1),$(2),$(3)))\
+$(1).hash
+endef
+
 # Internal: define hash rules for a target
 define _cas_make_inputs_rule
 # Track dependency list changes with a phony target
@@ -49,6 +56,12 @@ define _cas_make_inputs_rule
 		if [ -n "$(VERBOSE)" ]; then echo "No changes for $$@"; fi; \
 		rm $$@.tmp; \
 	fi
+endef
+
+# Internal: colocate hash file with target
+define _cas_make_inputs_rule_at
+$(1).hash: $(call cas_inputs,$(1),$(2),$(3))
+	@if [ ! -f $$@ ] || ! cmp -s $$< $$@; then cp $$< $$@; fi
 endef
 
 # cas_get_deps consumes the input marker file (implicitly assumed to be $^) and filters it to the given pattern.
