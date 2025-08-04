@@ -7,6 +7,7 @@ set -euo pipefail
 HASH_FILE="$1"
 TARGET="$2"
 COMMAND="$3"
+NORMALIZED_COMMAND="$4"
 
 # Configuration
 CACHE_DIR="${BUILD_CACHE_DIR:-.cache}"
@@ -22,8 +23,8 @@ if [[ ! -f "$HASH_FILE" ]]; then
     exit $?
 fi
 
-# Create cache key from dependency hashes
-CACHE_KEY=$(cat "$HASH_FILE" | sha1sum | cut -d' ' -f1)
+# Create cache key from dependency + command hashes
+CACHE_KEY=$(printf "%s\n%s" "$(cat "$HASH_FILE")" "$NORMALIZED_COMMAND" | sha1sum | cut -d' ' -f1)
 CACHED_TARGET="$CACHE_DIR/by-deps/$CACHE_KEY"
 mkdir -p "$(dirname "$CACHED_TARGET")"
 

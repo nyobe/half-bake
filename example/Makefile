@@ -27,6 +27,8 @@ bin/main: $(call cas_inputs,bin/main,$(GO) main.go lib.go)
 # you can see this in action when running `make all`: since main2 resolves to the same inputs as main,
 # it will be pulled from the cache instead of built.
 # this is a silly example, but in practice this avoids rebuilding artifacts when switching between branches.
+#
+# warning: this isn't fully correct because make will not rebuild if the command changes.
 bin/main2: $(call cas_inputs,bin/main2,$(GO) main.go lib.go)
 	$(call cas_run,$(GO) build -o $@ $(call cas_get_deps,%.go))
 
